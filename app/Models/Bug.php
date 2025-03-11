@@ -16,4 +16,9 @@ class Bug extends Model
     {
         return $this->hasMany(BugFile::class);
     }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class)->orderBy('created_at', 'desc')->with(['user', 'files']);
+    }
 }

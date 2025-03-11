@@ -6,22 +6,21 @@ use App\Enums\BugCriticality;
 use App\Enums\BugPriority;
 use App\Enums\BugStatus;
 use App\Models\Bug;
+use App\Models\BugFile;
 use App\Models\BugHistory;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Js;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
-use Psy\Util\Json;
 
 class BugController extends Controller
 {
     public function index(): JsonResponse
     {
-        $bugs = Bug::with(['files'])->paginate(10);
+        $bugs = Bug::with(['files'])->orderBy('id', 'desc')->paginate(10);
 
         return response()->json([
             'data' => $bugs->items(),
@@ -34,6 +33,13 @@ class BugController extends Controller
         ]);
     }
 
+    public function show(Bug $bug): JsonResponse
+    {
+        return response()->json([
+            'data' => $bug->load(['files', 'comments']),
+        ]);
+    }
+
     public function store(): JsonResponse
     {
         $validator = Validator::make(request()->all(), [
@@ -43,7 +49,6 @@ class BugController extends Controller
             'priority' => [new Enum(BugPriority::class)],
             'status' => [new Enum(BugStatus::class)],
             'steps' => 'required|string',
-            'user_id' => 'required|integer|exists:users,id',
             'responsible_user_id' => 'required|integer|exists:users,id',
             'files' => 'array|max:9',
             'files.*' => 'mimes:jpg,jpeg,png,txt,log,pdf,zip|max:5120',
@@ -58,23 +63,58 @@ class BugController extends Controller
 
         $data = $validator->validated();
 
+        $data['user_id'] = auth()->id();
+
         return DB::transaction(function () use ($data) {
             $bug = Bug::create($data);
-            $files_urls = [];
 
             if (isset($data['files']) && is_array($data['files']) && count($data['files'])) {
                 foreach ($data['files'] as $file) {
                     $file_path = $file->storeAs('files', uniqid() . '.' . $file->getClientOriginalExtension(), 'public');
 
-                    $fileRecord = $bug->files()->create([
+                    $bug->files()->create([
                         'file_url' => asset('storage/' . $file_path),
                     ]);
-
-                    $files_urls[] = $file_path;
                 }
             }
 
-            return response()->json(['data' => [$bug, $files_urls]]);
+            return response()->json(['data' => $bug->load('files')]);
+        }, 3);
+    }
+
+    public function update(Bug $bug): JsonResponse
+    {
+        $validator = Validator::make(request()->all(), [
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'steps' => 'required|string',
+            'files' => 'array|max:9',
+            'files.*' => 'mimes:jpg,jpeg,png,txt,log,pdf,zip|max:5120',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Ошибка валидации',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $data = $validator->validated();
+
+        return DB::transaction(function () use ($data, $bug) {
+            $bug->update($data);
+
+            if (isset($data['files']) && is_array($data['files']) && count($data['files'])) {
+                foreach ($data['files'] as $file) {
+                    $file_path = $file->storeAs('files', uniqid() . '.' . $file->getClientOriginalExtension(), 'public');
+
+                    $bug->files()->create([
+                        'file_url' => asset('storage/' . $file_path),
+                    ]);
+                }
+            }
+
+            return response()->json(['data' => $bug->load('files')]);
         }, 3);
     }
 
@@ -137,26 +177,22 @@ class BugController extends Controller
         }, 3);
     }
 
-    public function update(Bug $bug): JsonResponse
-    {
-        $data = request()->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'criticality' => [new Enum(BugCriticality::class)],
-            'priority' => [new Enum(BugPriority::class)],
-            'steps' => 'required|string',
-            'user_id' => 'required|integer|exists:users,id',
-        ]);
-
-        $bug->update($data);
-
-        return response()->json(['data' => $bug]);
-    }
-
     public function destroy(Bug $bug): JsonResponse
     {
+        foreach ($bug->files as $file) {
+            Storage::delete($file->file_url);
+        }
+
+        $bug->files()->delete();
         $bug->delete();
 
         return response()->json(['message' => 'Баг успешно удален']);
+    }
+
+    public function destroyFile(BugFile $file)
+    {
+        $file->delete();
+
+        return response()->json(['message' => "Файл успешно удален"]);
     }
 }

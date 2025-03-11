@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
@@ -23,7 +24,7 @@ class AuthController extends Controller
         $this->middleware('auth:api', ['except' => ['login', 'refresh', 'register', 'forgotPassword', 'resetPassword']]);
     }
 
-    public function forgotPassword()
+    public function forgotPassword(): JsonResponse
     {
         request()->validate(['email' => 'required|email']);
 
@@ -34,13 +35,17 @@ class AuthController extends Controller
             : response()->json(['error' => 'Ошибка при отправке'], 400);
     }
 
-    public function resetPassword()
+    public function resetPassword(): JsonResponse
     {
-        request()->validate([
-            'email' => 'email|required',
+        $validator = Validator::make(request()->all(), [
+            'email' => 'required|email',
             'token' => 'required',
             'password' => 'required|min:6|confirmed',
         ]);
+
+        if($validator->fails()){
+            return response()->json($validator->errors()->toJson(), 400);
+        }
 
         $status = Password::reset(
             request()->only('email', 'password', 'password_confirmation', 'token'),

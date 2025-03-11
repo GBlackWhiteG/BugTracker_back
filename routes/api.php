@@ -2,9 +2,8 @@
 
 use App\Http\Controllers\BugController;
 use App\Http\Controllers\BugHistoryController;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
+use App\Http\Controllers\CommentController;
+use App\Http\Controllers\VerifyController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 
@@ -22,15 +21,23 @@ Route::group(['middleware' => 'api', 'prefix' => 'auth'], function ($router) {
 Route::middleware('auth:api')->group(function () {
     Route::controller(BugController::class)->group(function () {
         Route::get('/bugs', 'index');
+        Route::get('/bugs/{bug}', 'show');
         Route::post('/bugs', 'store');
-        Route::patch('/bugs/{bug}', 'changeField');
+        Route::post('/bugs/{bug}', 'update');
+        Route::post('/bugs/fields/{bug}', 'changeField');
+        Route::delete('/bugs/{bug}', 'destroy');
+        Route::delete('/bugs/file/{file}', 'destroyFile');
     });
 
     Route::get('/bug-history/{id}', [BugHistoryController::class, 'index']);
+
+    Route::controller(CommentController::class)->group(function () {
+       Route::post('/comments', 'store');
+       Route::post('/comments/{comment}', 'update');
+       Route::delete('/comments/{comment}', 'destroy');
+       Route::delete('/comments/file/{file}', 'destroyFile');
+    });
 });
 
-Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-    $request->fulfill();
-
-    return redirect('/home');
-})->name('verification.verify');
+Route::get('/email/verify/{id}/{hash}', [VerifyController::class, 'verifyEmail'])
+    ->middleware('throttle:6,1')->name('verification.verify');
