@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SearchController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,4 +16,21 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
+});
+
+Route::get('/search', [SearchController::class, 'search']);
+
+Route::get('/test', function () {
+    app(App\Services\ElasticsearchService::class)->createIndex('articles', [
+        'settings' => [
+            'number_of_shards' => 1,
+            'number_of_replicas' => 1
+        ],
+        'mappings' => [
+            'properties' => [
+                'title' => ['type' => 'text'],
+                'content' => ['type' => 'text']
+            ]
+        ]
+    ]);
 });

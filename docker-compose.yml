@@ -36,5 +36,20 @@ services:
             -   "5433:5432"
         container_name: project_postgres
 
+    elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.5.1
+        container_name: elasticsearch
+        environment:
+            - discovery.type=single-node
+            - bootstrap-memory_lock=true
+            - xpack.security.enabled=false
+            - ES_JAVA_OPTS=-Xms512m -Xms512m
+        ulimits:
+            memlock:
+                soft: -1
+                hard: -1
+        ports:
+            - "9200:9200"
+
 volumes:
     pgdata:

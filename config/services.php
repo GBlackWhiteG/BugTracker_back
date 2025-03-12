@@ -14,6 +14,12 @@ return [
     |
     */
 
+    'elasticsearch' => [
+        'host' => env('ELASTICSEARCH_HOST', 'http://localhost:9200'),
+        'username' => env('ELASTICSEARCH_USERNAME', ''),
+        'password' => env('ELASTICSEARCH_PASSWORD', ''),
+    ],
+
     'mailgun' => [
         'domain' => env('MAILGUN_DOMAIN'),
         'secret' => env('MAILGUN_SECRET'),
