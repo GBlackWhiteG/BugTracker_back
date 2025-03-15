@@ -2,6 +2,12 @@
 
 namespace App\Providers;
 
+use App\Events\BugCreated;
+use App\Events\BugDeleted;
+use App\Events\BugUpdated;
+use App\Listeners\DeleteBugFromElasticsearch;
+use App\Listeners\SendBugToElasticsearch;
+use App\Listeners\UpdateBugInElasticsearch;
 use App\Notifications\VerifyEmail;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -18,6 +24,15 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
 
         ],
+        BugCreated::class => [
+            SendBugToElasticsearch::class,
+        ],
+        BugUpdated::class => [
+            UpdateBugInElasticsearch::class,
+        ],
+        BugDeleted::class => [
+            DeleteBugFromElasticsearch::class,
+        ]
     ];
 
     /**

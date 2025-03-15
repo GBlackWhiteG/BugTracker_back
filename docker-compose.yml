@@ -21,6 +21,8 @@ services:
             dockerfile: _docker/app/Dockerfile
         volumes:
             -   ./:/var/www
+        depends_on:
+            -   postgres
         container_name: project_app
 
     postgres:
@@ -38,7 +40,7 @@ services:
 
     elasticsearch:
         image: docker.elastic.co/elasticsearch/elasticsearch:8.5.1
-        container_name: elasticsearch
+        container_name: project_elasticsearch
         environment:
             - discovery.type=single-node
             - bootstrap-memory_lock=true

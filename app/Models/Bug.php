@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Events\BugCreated;
+use App\Events\BugDeleted;
+use App\Events\BugUpdated;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +12,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Bug extends Model
 {
     use HasFactory;
+
+    protected $dispatchesEvents = [
+        'created' => BugCreated::class,
+        'updated' => BugUpdated::class,
+        'deleted' => BugDeleted::class,
+    ];
 
     protected $fillable = ['title', 'description', 'priority', 'criticality', 'user_id', 'responsible_user_id', 'status', 'steps'];
 
