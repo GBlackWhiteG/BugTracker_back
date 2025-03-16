@@ -3,6 +3,7 @@
 use App\Http\Controllers\BugController;
 use App\Http\Controllers\BugHistoryController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\VerifyController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -38,6 +39,8 @@ Route::middleware('auth:api')->group(function () {
        Route::delete('/comments/file/{file}', 'destroyFile');
     });
 });
+
+Route::get('/search', [SearchController::class, 'search']);
 
 Route::get('/email/verify/{id}/{hash}', [VerifyController::class, 'verifyEmail'])
     ->middleware('throttle:6,1')->name('verification.verify');

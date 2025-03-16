@@ -18,17 +18,18 @@ class SearchController extends Controller
 
     public function search(Request $request): JsonResponse
     {
-        $query = $request->get('query');
+        $query = $request->query('query', '');
 
-        $query = "Laravel";
+        $filters = [
+            'criticality' => $request->query('criticality'),
+            'status' => $request->query('status'),
+            'priority' => $request->query('priority'),
+            'created_at' => $request->query('created_at'),
+        ];
 
-        if (!$query) {
-            return response()->json(['error' => 'Введите поисковый запрос'], 400);
-        }
+        $results = $this->elasticsearch->search('bugs', $query, $filters);
 
-        $results = $this->elasticsearch->search('articles', $query);
-
-        return response()->json($results);
+        return response()->json(['data' => $results]);
     }
 }
 

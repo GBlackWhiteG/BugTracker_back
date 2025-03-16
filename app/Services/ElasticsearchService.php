@@ -16,28 +16,73 @@ class ElasticsearchService
             ->build();
     }
 
-    public function createIndex(string $index, array $settings = []): array|string
+    public function index(string $index, array $data): void
     {
-        if ($this->client->indices()->exists(['index' => $index])->asBool()) {
-            return "Индекс $index уже существует.";
-        }
-
-        return $this->client->indices()->create([
+        $params = [
             'index' => $index,
-            'body' => $settings
-        ])->asArray();
+            'id' => $data['id'],
+            'body' => $data
+        ];
+
+        $this->client->index($params);
     }
 
-    public function search(string $index, string $query): array
+    public function search(string $index, string $query, array $filters = []): array
     {
+        $mustQuery = $query ? [
+            'bool' => [
+                'should' => [
+                    [
+                        'multi_match' => [
+                            'query' => $query,
+                            'fields' => ['title^2', 'description'],
+                        ]
+                    ],
+                    [
+                        'wildcard' => [
+                            'title' => [
+                                'value' => "*$query*",
+                                'boost' => 2.0
+                            ]
+                        ]
+                    ],
+                    [
+                        'wildcard' => [
+                            'description' => [
+                                'value' => "*$query*"
+                            ]
+                        ]
+                    ]
+                ],
+                'minimum_should_match' => 1
+            ]
+        ] : [
+            'match_all' => new \stdClass()
+        ];
+
+        $filterConditions = [];
+
+        if (!empty($filters['criticality'])) {
+            $filterConditions[] = ['term' => ['criticality' => $filters['criticality']]];
+        }
+        if (!empty($filters['status'])) {
+            $filterConditions[] = ['term' => ['status' => $filters['status']]];
+        }
+        if (!empty($filters['priority'])) {
+            $filterConditions[] = ['term' => ['priority' => $filters['priority']]];
+        }
+
         $params = [
             'index' => $index,
             'body' => [
                 'query' => [
-                    'multi_match' => [
-                        'query' => $query,
-                        'fields' => ['title^2', 'content']
+                    'bool' => [
+                        'must' => $mustQuery,
+                        'filter' => $filterConditions
                     ]
+                ],
+                'sort' => [
+                    'created_at' => ['order' => $filters['created_at'] ?? 'desc']
                 ]
             ]
         ];

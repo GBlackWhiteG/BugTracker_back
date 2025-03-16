@@ -2,7 +2,8 @@
 
 namespace Database\Seeders;
 
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Bug;
+use App\Services\ElasticsearchService;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -12,11 +13,22 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // \App\Models\User::factory(10)->create();
+        $this->call([
+           ElasticsearchSeeder::class
+        ]);
 
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        $this->indexBugsToElasticsearch();
+    }
+
+    private function indexBugsToElasticsearch(): void
+    {
+        $elasticsearch = app(ElasticsearchService::class);
+
+        Bug::chunk(100, function ($bugs) use ($elasticsearch) {
+            foreach ($bugs as $bug) {
+                $elasticsearch->index('bugs', $bug->toArray());
+            }
+        });
+
     }
 }
