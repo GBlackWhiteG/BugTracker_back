@@ -36,7 +36,7 @@ class BugController extends Controller
     public function show(Bug $bug): JsonResponse
     {
         return response()->json([
-            'data' => $bug->load(['files', 'comments']),
+            'data' => $bug->load(['files', 'comments', 'user', 'responsibleUser']),
         ]);
     }
 

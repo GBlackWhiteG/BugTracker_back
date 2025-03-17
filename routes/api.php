@@ -4,9 +4,14 @@ use App\Http\Controllers\BugController;
 use App\Http\Controllers\BugHistoryController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\VerifyController;
+use BeyondCode\LaravelWebSockets\Facades\WebSocketsRouter;
+use BeyondCode\LaravelWebSockets\WebSockets\WebSocketHandler;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+
+WebSocketsRouter::webSocket('/app/{appKey}', WebSocketHandler::class);
 
 Route::group(['middleware' => 'api', 'prefix' => 'auth'], function ($router) {
     Route::post('register', [AuthController::class, 'register']);
@@ -29,6 +34,8 @@ Route::middleware('auth:api')->group(function () {
         Route::delete('/bugs/{bug}', 'destroy');
         Route::delete('/bugs/file/{file}', 'destroyFile');
     });
+
+    Route::get('/profile/{user}', [UserController::class, 'show']);
 
     Route::get('/bug-history/{id}', [BugHistoryController::class, 'index']);
 

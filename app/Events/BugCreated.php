@@ -3,12 +3,13 @@
 namespace App\Events;
 
 use App\Models\Bug;
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class BugCreated
+class BugCreated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -27,10 +28,21 @@ class BugCreated
      *
      * @return array<int, \Illuminate\Broadcasting\Channel>
      */
-    public function broadcastOn(): array
+    public function broadcastOn(): Channel
+    {
+        return new Channel('bugs');
+    }
+
+    public function broadcastWith(): array
     {
         return [
-            new PrivateChannel('channel-name'),
+            'id' => $this->bug->id,
+            'title' => $this->bug->title,
+            'description' => $this->bug->description,
+            'status' => $this->bug->status,
+            'priority' => $this->bug->priority,
+            'criticality' => $this->bug->criticality,
+            'created_at' => $this->bug->created_at
         ];
     }
 }

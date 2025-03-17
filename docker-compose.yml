@@ -53,5 +53,14 @@ services:
         ports:
             - "9200:9200"
 
+    websockets:
+        image: php:8.3-cli
+        working_dir: /app
+        volumes:
+            -   .:/app
+        command: php artisan websockets:serve
+        ports:
+            -   "6001:6001"
+
 volumes:
     pgdata:
