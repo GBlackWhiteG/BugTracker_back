@@ -6,6 +6,8 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VerifyController;
+use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\ManagerMiddleware;
 use BeyondCode\LaravelWebSockets\Facades\WebSocketsRouter;
 use BeyondCode\LaravelWebSockets\WebSockets\WebSocketHandler;
 use Illuminate\Support\Facades\Route;
@@ -28,14 +30,17 @@ Route::middleware('auth:api')->group(function () {
     Route::controller(BugController::class)->group(function () {
         Route::get('/bugs', 'index');
         Route::get('/bugs/{bug}', 'show');
-        Route::post('/bugs', 'store');
-        Route::post('/bugs/{bug}', 'update');
+        Route::post('/bugs', 'store')->middleware([AdminMiddleware::class, ManagerMiddleware::class]);
+        Route::post('/bugs/{bug}', 'update')->middleware([AdminMiddleware::class, ManagerMiddleware::class]);
         Route::post('/bugs/fields/{bug}', 'changeField');
-        Route::delete('/bugs/{bug}', 'destroy');
-        Route::delete('/bugs/file/{file}', 'destroyFile');
+        Route::delete('/bugs/{bug}', 'destroy')->middleware([AdminMiddleware::class, ManagerMiddleware::class]);
+        Route::delete('/bugs/file/{file}', 'destroyFile')->middleware([AdminMiddleware::class, ManagerMiddleware::class]);
     });
 
-    Route::get('/profile/{user}', [UserController::class, 'show']);
+    Route::controller(UserController::class)->group(function () {
+        Route::get('/profile/{user}', 'show');
+        Route::get('/user-suggestions', 'suggestions');
+    });
 
     Route::get('/bug-history/{id}', [BugHistoryController::class, 'index']);
 

@@ -94,6 +94,10 @@ class CommentController extends Controller
             ], 422);
         }
 
+        if ($comment->user_id !== auth()->id()) {
+            return response()->json(['error' => 'Доступ запрещен'], 403);
+        }
+
         $data = $validator->validated();
 
         return DB::transaction(function () use ($data, $comment) {
