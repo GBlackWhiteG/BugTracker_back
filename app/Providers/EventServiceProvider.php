@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Events\BugCreated;
 use App\Events\BugDeleted;
+use App\Events\BugHistoryCreated;
 use App\Events\BugUpdated;
 use App\Listeners\DeleteBugFromElasticsearch;
 use App\Listeners\SendBugToElasticsearch;
@@ -32,6 +33,10 @@ class EventServiceProvider extends ServiceProvider
         ],
         BugDeleted::class => [
             DeleteBugFromElasticsearch::class,
+        ],
+
+        BugHistoryCreated::class => [
+
         ]
     ];
 
