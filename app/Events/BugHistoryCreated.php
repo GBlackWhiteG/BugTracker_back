@@ -39,7 +39,7 @@ class BugHistoryCreated implements ShouldBroadcastNow
         return [
             'id' => $this->bugHistory->id,
             'title' => $this->bugHistory->title,
-            'created_at' => $this->bug->created_at
+            'created_at' => $this->bugHistory->created_at
         ];
     }
 }
