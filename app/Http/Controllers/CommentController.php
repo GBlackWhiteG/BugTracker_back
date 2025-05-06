@@ -54,7 +54,7 @@ class CommentController extends Controller
                 $user->notify(new MentionNotification($comment));
             }
 
-            return response()->json(['data' => $comment->load('files')]);
+            return response()->json(['data' => $comment->load('files', 'user')]);
         }, 3);
     }
 
